@@ -1,14 +1,21 @@
 # -*- coding: utf-8 -*-
 #+STARTUP: overview indent inlineimages
 #+TITLE:       Laboratory Notebook for a Multi-Threaded Version of Quicksort
-#+AUTHOR:      Arnaud Legrand
+#+AUTHOR:      Generoso Pagano, Arnaud Legrand
 #+LANGUAGE:    en
-#+TAGS: IMPORTANT(i) TEST(t) DEPRECATED(d) noexport(n)
+#+TAGS: ARNAUD(a) REPRODUCED(r)
 
+* Intro
+This document is based on Arnaud Legrand's journal.org. I stole it and
+modified it to conduct a simple performance evaluation of a parallel
+implementation of QuickSort, and to play with org mode. In the
+[[Experimental%20Reports][Experimental Reports]] section, the tag =ARNAUD= is used to identify
+Arnaud's experiments. Among Arnaud's analyses, I tagged with
+=REPRODUCED= the analyses I re-executed on my machine.
 * Project Overview
 This project aims at providing an efficient multi-threaded
 implementation of the QuickSort algorithm on multi-core machines. This
-document contains my attempts to evaluate the performance of an
+document contains some attempts to evaluate the performance of an
 implementation of such code.
 * General Organization
 ** src/
@@ -23,21 +30,31 @@ echo mkdir data/`hostname`_`date +%F`
 #+end_src
 
 #+RESULTS:
-: mkdir data/sama_2014-10-13
+: mkdir data/jklaptop_2014-10-24
 
 * Typical usage
 ** Compilation
 A simple makefile with various compilation options is provided in the
 src/ directory. Compilation is thus done by running the following command:
-#+begin_src sh :results output :exports both 
+#+begin_src sh :results output 
 make -C src/
 #+end_src
 
 #+RESULTS:
-: make: Entering directory '/home/alegrand/Work/Documents/Enseignements/M2R_Eval_Perf_13/M2R-ParallelQuicksort/src'
+: make: Entering directory '/home/generoso/Dropbox/work/R_course/M2R-ParallelQuicksort/src'
 : cc   -g -Wall -Wshadow -Wcast-align -Waggregate-return -Wmissing-prototypes -Wmissing-declarations -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wmissing-noreturn -Wpointer-arith -Wwrite-strings -finline-functions -O0 -pthread -lrt -std=c99  -c -o parallelQuicksort.o parallelQuicksort.c
 : cc   -g -Wall -Wshadow -Wcast-align -Waggregate-return -Wmissing-prototypes -Wmissing-declarations -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wmissing-noreturn -Wpointer-arith -Wwrite-strings -finline-functions -O0 -pthread -lrt -std=c99  parallelQuicksort.o  -o parallelQuicksort 
-: make: Leaving directory '/home/alegrand/Work/Documents/Enseignements/M2R_Eval_Perf_13/M2R-ParallelQuicksort/src'
+: make: Leaving directory '/home/generoso/Dropbox/work/R_course/M2R-ParallelQuicksort/src'
+
+Of course, you can clean up everything with:
+#+begin_src sh :results output 
+make clean -C src/
+#+end_src
+
+#+RESULTS:
+: make: Entering directory '/home/generoso/Dropbox/work/R_course/M2R-ParallelQuicksort/src'
+: rm -f parallelQuicksort *.o *~
+: make: Leaving directory '/home/generoso/Dropbox/work/R_course/M2R-ParallelQuicksort/src'
 
 ** Running the code
 The code is quite simple at the moment and can be run in the following way:
@@ -51,8 +68,12 @@ using:
 2. a custom parallel implementation;
 3. the libc qsort function.
 Times are reported in seconds.
+
+* Modifications to do [0/2]
+** TODO Measure times in a more accurate way
+** TODO Rewrite the scripts in python
 * Experimental Reports
-** 2014-10-13
+** 2014-10-13                                                       :ARNAUD:
 *** Initial code design
 - I obtained an initial implementation from
   http://sc12.supercomputing.org/hpceducator/PythonForParallelism/codes/parallelQuicksort.c.
@@ -66,11 +87,6 @@ Times are reported in seconds.
   #+end_src
 
   #+RESULTS:
-  : Sequential quicksort took: 0.231571 sec.
-  : at loc 506315, 5.068226e-01 < 5.068269e-01 
-  : Oops, lyst did not get sorted by parallelQuicksort.
-  : Parallel quicksort took: 0.161259 sec.
-  : Built-in qsort took: 0.241568 sec.
 
   Sweet, in my first attempt, it looks like this parallel version is
   indeed running faster than then sequential one. I have to say this
@@ -107,7 +123,7 @@ times in a row.
 #+end_src
 I obtained the following [[file:data/sama_2014-10-13/measurements_03:47.txt][output]].
 
-*** A simple plot with R
+*** A simple plot with R                                       :REPRODUCED:
 Here is a simple script to parse the results:
 #+begin_src perl :results output raw :exports both :tangle scripts/csv_quicksort_extractor.pl
   use strict;
@@ -146,7 +162,7 @@ perl scripts/csv_quicksort_extractor.pl < data/sama_2014-10-13/measurements_03\:
 [[file:data/sama_2014-10-13/measurements_03:47.png]]
 
 Well, this is not particularly nice and some may not know/like R.
-*** A simple plot with gnuplot
+*** A simple plot with gnuplot                                 :REPRODUCED:
 So let's try to parse in an other way and use gnuplot:
 
 #+begin_src perl :results output raw :exports both :tangle scripts/csv_quicksort_extractor2.pl
@@ -195,3 +211,18 @@ So let's try to parse in an other way and use gnuplot:
 Well, I'm not sure it is nicer but I have lines. A first crude
 analysis seems to reveal the the parallel version is worth it for
 arrays larger than 400000.
+** 2014-10-25
+*** Environment Setup
+To play with org mode and easily reproduce Arnaud's analyses, I had to:
+- Set-up emacs with a convenient configuration file (I based my configuration file on [[http://mescal.imag.fr/membres/arnaud.legrand/misc/init.org][the one]] on Arnaud's website).
+- Install ess (and R, which is a dependency); on my Debian 3.16.3-2 I
+  did this with the following command:
+  #+BEGIN_SRC 
+  sudo apt-get install ess 
+  #+END_SRC
+  After installing ess, I just added the following line to my emacs
+  init file:
+  #+begin_src emacs-lisp
+  (require 'ess-site)
+  #+end_src
+  
