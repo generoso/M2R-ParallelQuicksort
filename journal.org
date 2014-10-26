@@ -248,9 +248,9 @@ echo "RAM: "`cat /proc/meminfo | grep "MemTotal" | awk '{print $2 " " $3}'`
 : Scaling governor: performance
 : RAM: 6040504 kB
 
-*** First series of experiment
+*** First series of experiments
 I run my first series of experiments varying the array size and
-running 30 repetition for each size.
+running 30 repetitions for each size.
 
 #+begin_src sh :exports both :tangle scripts/bench_1.sh
   OUTPUT_DIRECTORY=data/`hostname`_`date +%F`
@@ -282,18 +282,7 @@ that is easily readable using R.
 
 #+RESULTS:
 
-#+begin_src R :results output graphics :file data/jklaptop_2014-10-25/measurements_21:13.png :exports both :width 600 :height 400 :session
-  df <- read.csv("data/jklaptop_2014-10-25/measurements_21:13.csv",header=T)
-  plot(df$Size,df$Time,col=c("red","blue","green")[df$Type])
-#+end_src
-
-#+RESULTS:
-[[file:data/jklaptop_2014-10-25/measurements_21:13.png]]
-
-This plot is not so clear, so I try to play with R to get something
-more interesting, with means, confidence intervals, lines and legend.
-
-#+begin_src R :results output graphics :file data/jklaptop_2014-10-25/measurements_21:13_1.png :exports both :width 600 :height 400 
+#+begin_src R :results output graphics :file data/jklaptop_2014-10-25/measurements_21:13.png :exports both :width 600 :height 400 
 library("data.table")
 library("ggplot2")
 # create a summary: Size, Type, Mean, Error  
@@ -305,17 +294,71 @@ summary = data.frame(results[,.(Size, Type, mean, error = qnorm(0.975)*sd/sqrt(n
 ggplot(summary, aes(x=Size, y=mean, colour=Type)) + 
     geom_errorbar(aes(ymin=mean-error, ymax=mean+error), width=.1) +
     geom_line() +
-    geom_point()
+    geom_point() +
+    scale_y_continuous(name="Time (s)") +
+    scale_x_continuous(name="Array size")
 #+end_src
 
 #+RESULTS:
-[[file:data/jklaptop_2014-10-25/measurements_21:13_1.png]]
+[[file:data/jklaptop_2014-10-25/measurements_21:13.png]]
 
 Somewhere between 100000 and 1000000, the parallel version is
 better. I want to do more experiments to see with better percision
 when the parallel version of the algorithm actually becomes better.
+** 2014-10-26
+*** New series of experiments on my personal machine
 
-* TODO Todo [1/3]
-- [X] redo R plot with lines, confidence intervals, legend
-- [ ] more experiments between 100000 and 1000000
-- [ ] plot labels 
+I want to cover the region between 100k and 1M in this new experiments.
+Then I'll combine the data with my previous results.
+
+#+begin_src sh :exports both :tangle scripts/bench_2.sh
+  OUTPUT_DIRECTORY=data/`hostname`_`date +%F`
+  mkdir -p $OUTPUT_DIRECTORY
+  OUTPUT_FILE=$OUTPUT_DIRECTORY/measurements_`date +%R`.txt
+
+  touch $OUTPUT_FILE
+  for i in 250000 500000 750000; do
+      for rep in `seq 1 30`; do
+          echo "Size: $i" >> $OUTPUT_FILE;
+          ./src/parallelQuicksort $i >> $OUTPUT_FILE;
+      done ;
+  done
+  echo "finish"
+#+end_src
+
+#+RESULTS:
+
+*** New analysis with R
+
+#+begin_src sh :results output :exports both 
+  FILENAME="data/jklaptop_2014-10-26/measurements_19:59"
+  perl scripts/csv_quicksort_extractor.pl < "$FILENAME.txt" > "$FILENAME.csv"
+  cat "data/jklaptop_2014-10-25/measurements_21:13.csv" | grep -v "Size" >> "$FILENAME.csv"
+#+end_src
+
+#+RESULTS:
+
+#+begin_src R :results output graphics :file data/jklaptop_2014-10-26/measurements_19:59.png :exports both :width 600 :height 400 
+library("data.table")
+library("ggplot2")
+# create a summary: Size, Type, Mean, Error  
+dt <- data.table(read.csv("data/jklaptop_2014-10-26/measurements_19:59.csv"))
+setkey(dt, Size, Type)
+results = dt[,.(mean=mean(Time), sd=sd(Time), n=NROW(Time)), by="Size,Type"]
+summary = data.frame(results[,.(Size, Type, mean, error = qnorm(0.975)*sd/sqrt(n))])
+# plot
+ggplot(summary, aes(x=Size, y=mean, colour=Type)) + 
+    geom_errorbar(aes(ymin=mean-error, ymax=mean+error), width=.1) +
+    geom_line() +
+    geom_point() +
+    scale_y_continuous(name="Time (s)") +
+    scale_x_continuous(name="Array size")
+#+end_src
+
+#+RESULTS:
+[[file:data/jklaptop_2014-10-26/measurements_19:59.png]]
+
+This analysis seems to reveal that, after 300k elements, the parallel
+version of the quicksort starts to be better than the other versions.
+By the way, the confidence intervals are quite big, so only after 750k
+elements the parallel version actually shows a real gain.
