@@ -224,18 +224,21 @@ To play with org mode and easily reproduce Arnaud's analyses, I had to:
   #+end_src
 *** Experimental environment (my personal machine)
 - Operating System details
+
 #+begin_src sh :results output :exports results
 uname -a
 #+end_src
 
 #+RESULTS:
 : Linux jklaptop 3.16-2-amd64 #1 SMP Debian 3.16.3-2 (2014-09-20) x86_64 GNU/Linux
-- Hw information
+
 #+begin_src sh :results output :exports results
 echo "Number of CPUs: "`cat /proc/cpuinfo | grep "model name" | wc -l`
 echo "CPU information (all cpus are equal):"
-echo "- " `cat /proc/cpuinfo | grep "model name" | tail -n 1`
-echo "- " `cat /proc/cpuinfo | grep "cache size" | tail -n 1`
+echo "- "`grep "model name" /proc/cpuinfo | tail -1`
+echo "- "`grep "cache size" /proc/cpuinfo | tail -1`
+HT=`grep -o '^flags\b.*: .*\bht\b' /proc/cpuinfo | tail -1 | wc -l`
+echo "- hyperthreading : "`if [ $HT -eq 1 ]; then echo "active"; else echo "not active"; fi` 
 echo "Scaling governor: "`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor`
 echo "RAM: "`cat /proc/meminfo | grep "MemTotal" | awk '{print $2 " " $3}'` 
 #+end_src
@@ -243,9 +246,10 @@ echo "RAM: "`cat /proc/meminfo | grep "MemTotal" | awk '{print $2 " " $3}'`
 #+RESULTS:
 : Number of CPUs: 4
 : CPU information (all cpus are equal):
-: -  model name : Intel(R) Core(TM) i7-2640M CPU @ 2.80GHz
-: -  cache size : 4096 KB
-: Scaling governor: performance
+: - model name : Intel(R) Core(TM) i7-2640M CPU @ 2.80GHz
+: - cache size : 4096 KB
+: - hyperthreading : active
+: Scaling governor: powersave
 : RAM: 6040504 kB
 
 *** First series of experiments
