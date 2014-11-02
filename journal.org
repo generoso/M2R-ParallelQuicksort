@@ -370,7 +370,7 @@ elements the parallel version actually shows a real gain.
 *** Experiments on Grid-5k
 After configuring a proxy command in my .ssh/config file, I prepare
 the directory structure on the lille frontend, then I copy there the
-source code, the =read_configuration.sh= script and a launch script.
+source code, the [[file:scripts/read_configuration.sh][=read_configuration.sh=]] script and a launch script.
 
 Directory structure creation:
 
@@ -449,7 +449,10 @@ Scaling governor: performance
 RAM: 8188956 kB
 #+end_example
 
-The experiment produced this raw [[file:data/chirloute-3.lille.grid5000.fr_2014-11-02/measurements_15:37.txt][output]].
+The experiments produced this raw [[file:data/chirloute-3.lille.grid5000.fr_2014-11-02/measurements_15:37.txt][output]].
+
+As before, I parse the output with the perl script to obtain a csv and
+analize it with R.
 
 #+begin_src sh :results output :exports both 
   FILENAME="data/chirloute-3.lille.grid5000.fr_2014-11-02/measurements_15:37"
