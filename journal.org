@@ -378,7 +378,7 @@ elements the parallel version actually shows a real gain.
 
 After configuring a proxy command in my .ssh/config file, I prepare
 the directory structure on the lille frontend, then I copy there the
-source code, the read_configuration,sh script and a launch script.
+source code, the =read_configuration.sh= script and a launch script.
 
 Directory structure creation:
 
@@ -430,7 +430,7 @@ make -C ./src
 ./scripts/run_benchmarking_5k.sh
 #+end_src
 
-Get results back for analysis:
+Get the results back for the analysis:
   
 #+begin_src sh :results output :session 5k
 scp -r lille-g5k:/home/gpagano/generoso/quicksort/data/* data
