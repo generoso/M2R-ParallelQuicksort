@@ -274,11 +274,7 @@ running 30 repetitions for each size.
           ./src/parallelQuicksort $i >> $OUTPUT_FILE;
       done ;
   done
-  echo "finish"
 #+end_src
-
-#+RESULTS:
-: finish
 
 I obtained the following [[file:data/jklaptop_2014-10-25/measurements_21:13.txt][output]]. 
 *** Analysis with R
@@ -317,7 +313,6 @@ better. I want to do more experiments to see with better percision
 when the parallel version of the algorithm actually becomes better.
 ** 2014-10-26
 *** New series of experiments on my personal machine
-
 I want to cover the region between 100k and 1M in this new experiments.
 Then I'll combine the data with my previous results.
 
@@ -333,11 +328,9 @@ Then I'll combine the data with my previous results.
           ./src/parallelQuicksort $i >> $OUTPUT_FILE;
       done ;
   done
-  echo "finish"
 #+end_src
 
-#+RESULTS:
-
+The new experiments produced this raw [[file:data/jklaptop_2014-10-26/measurements_19:59.txt][output]].
 *** New analysis with R
 
 #+begin_src sh :results output :exports both 
@@ -375,7 +368,6 @@ elements the parallel version actually shows a real gain.
 
 ** 2014-11-02
 *** Experiments on Grid-5k
-
 After configuring a proxy command in my .ssh/config file, I prepare
 the directory structure on the lille frontend, then I copy there the
 source code, the =read_configuration.sh= script and a launch script.
@@ -435,9 +427,7 @@ Get the results back for the analysis:
 #+begin_src sh :results output :session 5k
 scp -r lille-g5k:/home/gpagano/generoso/quicksort/data/* data
 #+end_src
-
 *** Analysis of Grid-5k results
-
 The node used for the experiments is chirloute-3.lille.grid5000.fr.
 The configuration is the following:
 
@@ -458,6 +448,8 @@ CPU information (all cpus are equal):
 Scaling governor: performance
 RAM: 8188956 kB
 #+end_example
+
+The experiment produced this raw [[file:data/chirloute-3.lille.grid5000.fr_2014-11-02/measurements_15:37.txt][output]].
 
 #+begin_src sh :results output :exports both 
   FILENAME="data/chirloute-3.lille.grid5000.fr_2014-11-02/measurements_15:37"
