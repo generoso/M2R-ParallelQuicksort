@@ -223,16 +223,13 @@ To play with org mode and easily reproduce Arnaud's analyses, I had to:
   (require 'ess-site)
   #+end_src
 *** Experimental environment (my personal machine)
-- Operating System details
 
-#+begin_src sh :results output :exports results
+I use the following script to get the system details.
+
+#+begin_src sh :results output :tangle scripts/read_configuration.sh :shebang "#!/bin/bash"
+echo "# OS details"
 uname -a
-#+end_src
-
-#+RESULTS:
-: Linux jklaptop 3.16-2-amd64 #1 SMP Debian 3.16.3-2 (2014-09-20) x86_64 GNU/Linux
-
-#+begin_src sh :results output :exports results
+echo "# HW details"
 echo "Number of CPUs: "`cat /proc/cpuinfo | grep "model name" | wc -l`
 echo "CPU information (all cpus are equal):"
 echo "- "`grep "model name" /proc/cpuinfo | tail -1`
@@ -243,14 +240,23 @@ echo "Scaling governor: "`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_gover
 echo "RAM: "`cat /proc/meminfo | grep "MemTotal" | awk '{print $2 " " $3}'` 
 #+end_src
 
+#+begin_src sh :results output :exports results
+./scripts/read_configuration.sh
+#+end_src
+
 #+RESULTS:
-: Number of CPUs: 4
-: CPU information (all cpus are equal):
-: - model name : Intel(R) Core(TM) i7-2640M CPU @ 2.80GHz
-: - cache size : 4096 KB
-: - hyperthreading : active
-: Scaling governor: powersave
-: RAM: 6040504 kB
+#+begin_example
+# OS details
+Linux jklaptop 3.16-2-amd64 #1 SMP Debian 3.16.3-2 (2014-09-20) x86_64 GNU/Linux
+# HW details
+Number of CPUs: 4
+CPU information (all cpus are equal):
+- model name : Intel(R) Core(TM) i7-2640M CPU @ 2.80GHz
+- cache size : 4096 KB
+- hyperthreading : active
+Scaling governor: performance
+RAM: 6040504 kB
+#+end_example
 
 *** First series of experiments
 I run my first series of experiments varying the array size and
@@ -290,7 +296,7 @@ that is easily readable using R.
 library("data.table")
 library("ggplot2")
 # create a summary: Size, Type, Mean, Error  
-dt <- data.table(read.csv("data/jklaptop_2014-10-25/measurements_21:13.csv"))
+dt <- data.table(read.csv(""))
 setkey(dt, Size, Type)
 results = dt[,.(mean=mean(Time), sd=sd(Time), n=NROW(Time)), by="Size,Type"]
 summary = data.frame(results[,.(Size, Type, mean, error = qnorm(0.975)*sd/sqrt(n))])
@@ -365,4 +371,121 @@ ggplot(summary, aes(x=Size, y=mean, colour=Type)) +
 This analysis seems to reveal that, after 300k elements, the parallel
 version of the quicksort starts to be better than the other versions.
 By the way, the confidence intervals are quite big, so only after 750k
-elements the parallel version actually shows a real gain.
+elements the parallel version actually shows a real gain.        
+
+** 2014-11-02
+*** Experiments on Grid-5k
+
+After configuring a proxy command in my .ssh/config file, I prepare
+the directory structure on the lille frontend, then I copy there the
+source code, the read_configuration,sh script and a launch script.
+
+Directory structure creation:
+
+#+begin_src sh :session 5k 
+ssh lille-g5k
+mkdir -p generoso/quicksort/src
+mkdir -p generoso/quicksort/data
+mkdir -p generoso/quicksort/scripts
+exit
+#+end_src
+
+Launch script:
+
+#+begin_src sh foo :results output :exports both :tangle scripts/run_benchmarking_5k.sh :shebang "#!/bin/bash"
+  OUTPUT_DIRECTORY=data/`hostname`_`date +%F`
+  mkdir -p $OUTPUT_DIRECTORY
+  OUTPUT_FILE=$OUTPUT_DIRECTORY/measurements_`date +%R`.txt
+  CONF_FILE=$OUTPUT_DIRECTORY/configuration_`date +%R`.txt
+
+  touch $CONF_FILE
+  ./scripts/read_configuration.sh >> $CONF_FILE
+
+  touch $OUTPUT_FILE
+  for i in 100 1000 10000 100000 250000 500000 750000 1000000; do
+      for rep in `seq 1 5`; do
+          echo "Size: $i" >> $OUTPUT_FILE;
+          ./src/parallelQuicksort $i >> $OUTPUT_FILE;
+      done ;
+  done
+#+end_src
+
+Copy src and scripts:
+
+#+begin_src sh :session 5k
+scp -r src/Makefile gpagano@lille-g5k:/home/gpagano/generoso/quicksort/src
+scp -r src/parallelQuicksort.c gpagano@lille-g5k:/home/gpagano/generoso/quicksort/src
+scp -r scripts/run_benchmarking_5k.sh gpagano@lille-g5k:/home/gpagano/generoso/quicksort/scripts
+scp -r scripts/read_configuration.sh gpagano@lille-g5k:/home/gpagano/generoso/quicksort/scripts
+#+end_src
+
+Connect to the lille frontend, reserve a node, compile the code and
+run the experiments.
+
+#+begin_src sh :results output :session 5k
+ssh lille-g5k
+oarsub -I
+cd generoso/quicksort
+make -C ./src
+./scripts/run_benchmarking_5k.sh
+#+end_src
+
+Get results back for analysis:
+  
+#+begin_src sh :results output :session 5k
+scp -r lille-g5k:/home/gpagano/generoso/quicksort/data/* data
+#+end_src
+
+*** Analysis of Grid-5k results
+
+The node used for the experiments is chirloute-3.lille.grid5000.fr.
+The configuration is the following:
+
+#+begin_src sh :results output :exports results
+cat ./data/chirloute-3.lille.grid5000.fr_2014-11-02/configuration_15\:37.txt
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# OS details
+Linux chirloute-3.lille.grid5000.fr 3.2.0-4-amd64 #1 SMP Debian 3.2.60-1+deb7u3 x86_64 GNU/Linux
+# HW details
+Number of CPUs: 8
+CPU information (all cpus are equal):
+- model name : Intel(R) Xeon(R) CPU E5620 @ 2.40GHz
+- cache size : 12288 KB
+- hyperthreading : active
+Scaling governor: performance
+RAM: 8188956 kB
+#+end_example
+
+#+begin_src sh :results output :exports both 
+  FILENAME="data/chirloute-3.lille.grid5000.fr_2014-11-02/measurements_15:37"
+  perl scripts/csv_quicksort_extractor.pl < "$FILENAME.txt" > "$FILENAME.csv"
+#+end_src
+
+#+RESULTS:
+
+#+begin_src R :results output graphics :file data/chirloute-3.lille.grid5000.fr_2014-11-02/measurements_15:37.png :exports both :width 600 :height 400 
+library("data.table")
+library("ggplot2")
+# create a summary: Size, Type, Mean, Error  
+dt <- data.table(read.csv("data/chirloute-3.lille.grid5000.fr_2014-11-02/measurements_15:37.csv"))
+setkey(dt, Size, Type)
+results = dt[,.(mean=mean(Time), sd=sd(Time), n=NROW(Time)), by="Size,Type"]
+summary = data.frame(results[,.(Size, Type, mean, error = qnorm(0.975)*sd/sqrt(n))])
+# plot
+ggplot(summary, aes(x=Size, y=mean, colour=Type)) + 
+    geom_errorbar(aes(ymin=mean-error, ymax=mean+error), width=.1) +
+    geom_line() +
+    geom_point() +
+    scale_y_continuous(name="Time (s)") +
+    scale_x_continuous(name="Array size")
+#+end_src
+
+#+RESULTS:
+[[file:data/chirloute-3.lille.grid5000.fr_2014-11-02/measurements_15:37.png]]
+
+On the chirloute node, the parallel version of quicksort seems to be
+actually worth it only starting from about 1000000 (considering the
+confidence interval).

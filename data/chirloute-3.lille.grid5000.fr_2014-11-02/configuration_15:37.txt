@@ -1,0 +1,10 @@
+# OS details
+Linux chirloute-3.lille.grid5000.fr 3.2.0-4-amd64 #1 SMP Debian 3.2.60-1+deb7u3 x86_64 GNU/Linux
+# HW details
+Number of CPUs: 8
+CPU information (all cpus are equal):
+- model name : Intel(R) Xeon(R) CPU E5620 @ 2.40GHz
+- cache size : 12288 KB
+- hyperthreading : active
+Scaling governor: performance
+RAM: 8188956 kB

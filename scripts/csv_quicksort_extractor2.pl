@@ -19,7 +19,7 @@ while($line=<>) {
     } 
     if($line =~/^Built-in quicksort.*: ([\d\.]*) sec.$/) {
         $libc=$1; 
-        print "$size, $seq, $par, $libc\n";
+        print "$size, $seq, $pqr, $libc\n";
         next;
     }
 }
