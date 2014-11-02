@@ -370,7 +370,7 @@ elements the parallel version actually shows a real gain.
 *** Experiments on Grid-5k
 After configuring a proxy command in my .ssh/config file, I prepare
 the directory structure on the lille frontend, then I copy there the
-source code, the [[file:scripts/read_configuration.sh][=read_configuration.sh=]] script and a launch script.
+source code, the [[file:scripts/read_configuration.sh][script to read the configuration]] and a launch script.
 
 Directory structure creation:
 
