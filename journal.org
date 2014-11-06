@@ -292,7 +292,7 @@ that is easily readable using R.
 library("data.table")
 library("ggplot2")
 # create a summary: Size, Type, Mean, Error  
-dt <- data.table(read.csv(""))
+dt <- data.table(read.csv("data/jklaptop_2014-10-25/measurements_21:13.csv"))
 setkey(dt, Size, Type)
 results = dt[,.(mean=mean(Time), sd=sd(Time), n=NROW(Time)), by="Size,Type"]
 summary = data.frame(results[,.(Size, Type, mean, error = qnorm(0.975)*sd/sqrt(n))])
